@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "ultraplayerengine",
+  "version": "${version}",
+  "name": "UltraPlayerEngine",
+  "description": "Server-side tick and player-load monitor for Fabric 1.21.11.",
+  "authors": ["UltraPlayerEngine contributors"],
+  "license": "MIT",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "dev.ultraplayerengine.UltraPlayerEngine"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "1.21.11",
+    "java": ">=21",
+    "fabric-api": ">=0.141.6"
+  }
+}
