@@ -1,3 +1,4 @@
+
 package dev.ultraplayerengine;
 
 import com.mojang.brigadier.CommandDispatcher;
@@ -12,51 +13,74 @@ import net.minecraft.server.MinecraftServer;
 import java.util.Locale;
 
 public final class UltraPlayerEngine implements ModInitializer {
+
     private static final TickMonitor MONITOR = new TickMonitor(120);
 
     @Override
     public void onInitialize() {
-        ServerTickEvents.END_SERVER_TICK.register(server -> MONITOR.recordTick());
 
-        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
-                registerCommands(dispatcher));
+        ServerTickEvents.END_SERVER_TICK.register(server -> {
+            MONITOR.recordTick();
+        });
 
-        System.out.println("[UltraPlayerEngine] Server-side monitor initialized.");
+        CommandRegistrationCallback.EVENT.register(
+            (dispatcher, registryAccess, environment) -> {
+                registerCommands(dispatcher);
+            }
+        );
+
+        System.out.println(
+            "[UltraPlayerEngine] Successfully initialized!"
+        );
     }
 
-    private static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("upe")
-                .requires(source -> source.hasPermission(2))
-                .then(Commands.literal("status").executes(context -> {
-                    MinecraftServer server = context.getSource().getServer();
-                    TickMonitor.Snapshot snapshot = MONITOR.snapshot();
-                    Runtime runtime = Runtime.getRuntime();
+    private static void registerCommands(
+        CommandDispatcher<CommandSourceStack> dispatcher
+    ) {
 
-                    long usedMb = (runtime.totalMemory() - runtime.freeMemory()) / 1024L / 1024L;
-                    long maxMb = runtime.maxMemory() / 1024L / 1024L;
-                    int players = server.getPlayerList().getPlayers().size();
+        dispatcher.register(
+            Commands.literal("upe")
+                .then(Commands.literal("status")
+                    .executes(context -> {
 
-                    String message = String.format(Locale.ROOT,
-                            "UltraPlayerEngine | Spieler: %d | Ø MSPT: %.2f | geschätzte TPS: %.2f | P95 MSPT: %.2f | RAM: %d/%d MB | Messungen: %d",
+                        MinecraftServer server =
+                            context.getSource().getServer();
+
+                        TickMonitor.Snapshot snapshot =
+                            MONITOR.snapshot();
+
+                        Runtime runtime = Runtime.getRuntime();
+
+                        long usedMb =
+                            (runtime.totalMemory() -
+                            runtime.freeMemory()) / 1024 / 1024;
+
+                        long maxMb =
+                            runtime.maxMemory() / 1024 / 1024;
+
+                        int players =
+                            server.getPlayerList()
+                            .getPlayers().size();
+
+                        String message = String.format(
+                            Locale.ROOT,
+                            "UltraPlayerEngine | Players: %d | Average MSPT: %.2f | TPS: %.2f | P95 MSPT: %.2f | RAM: %d/%d MB",
                             players,
                             snapshot.averageMspt(),
                             snapshot.estimatedTps(),
                             snapshot.p95Mspt(),
                             usedMb,
-                            maxMb,
-                            snapshot.samples());
+                            maxMb
+                        );
 
-                    context.getSource().sendSuccess(() -> Component.literal(message), false);
-                    return 1;
-                }))
-                .then(Commands.literal("reset").executes(context -> {
-                    MONITOR.reset();
-                    context.getSource().sendSuccess(
-                            () -> Component.literal("UltraPlayerEngine: Tick-Messwerte zurückgesetzt."),
+                        context.getSource().sendSuccess(
+                            () -> Component.literal(message),
                             false
-                    );
-                    return 1;
-                }))
+                        );
+
+                        return 1;
+                    })
+                )
         );
     }
 }
